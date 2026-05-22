@@ -1,0 +1,54 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=${OLLAMA_HOST}
+    entrypoint: ["/bin/sh", "-c", "ollama pull ${OLLAMA_MODEL}"]
+    restart: "no"
+
+  ai-developer:
+    build:
+      context: ./ai-developer
+      dockerfile: Dockerfile
+    container_name: ai-developer
+    environment:
+      - OLLAMA_HOST
+      - OLLAMA_MODEL
+      - OUTPUT_DIR
+      - PYTHONIOENCODING=utf-8
+    volumes:
+      - ./output:/output
+
+    # depends_on:
+      # ollama:
+        # condition: service_healthy
+    # stdin_open: true
+    # tty: true
+
+volumes:
+  ollama_data:

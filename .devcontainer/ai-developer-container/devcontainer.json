@@ -1,0 +1,23 @@
+{
+  "name": "AI Developer Container",
+  "dockerComposeFile": ["../../docker-compose.yml","../../docker-compose.ai-developer.yml"],
+  "service": "ai-developer",
+  "shutdownAction": "none",
+  "workspaceFolder": "/workspace/ai-developer",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "workbench.colorTheme": "Monokai"
+      },
+      "extensions": [
+        "ms-python.python"
+      ]
+    }
+  },
+  "runServices": [
+    "ai-developer"
+  ],
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  }
+}
