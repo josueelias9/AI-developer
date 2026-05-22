@@ -9,6 +9,7 @@ from app.interfaces.cli.cli_handler import CLIHandler
 def main() -> None:
     base_url = os.getenv("OLLAMA_HOST")
     model = os.getenv("OLLAMA_MODEL")
+    coder_model = os.getenv("OLLAMA_CODER")
     output_dir = os.getenv("OUTPUT_DIR")
 
     os.makedirs(output_dir, exist_ok=True)
@@ -17,6 +18,7 @@ def main() -> None:
     llm_gateway = OllamaAgentGateway(
         base_url=base_url,
         model=model,
+        coder_model=coder_model,
         code_repository=code_repository,
     )
     use_case = GenerateBackendCodeUseCase(llm_gateway=llm_gateway)

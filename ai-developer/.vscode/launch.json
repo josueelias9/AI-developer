@@ -12,8 +12,20 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "justMyCode": false
-
         },
-
+        {
+            "name": "🟢 AI Developer: Evaluate (LangSmith)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/evaluate.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false,
+            "env": {
+                "LANGCHAIN_TRACING_V2": "true",
+                "LANGCHAIN_API_KEY": "",
+                "LANGCHAIN_PROJECT": "ai-developer-eval",
+            }
+        }
     ]
 }

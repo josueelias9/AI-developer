@@ -39,8 +39,10 @@ services:
     environment:
       - OLLAMA_HOST
       - OLLAMA_MODEL
+      - OLLAMA_CODER
       - OUTPUT_DIR
       - PYTHONIOENCODING=utf-8
+      - LANGSMITH_API_KEY
     volumes:
       - ./output:/output
 

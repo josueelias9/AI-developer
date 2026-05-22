@@ -10,7 +10,8 @@
         "workbench.colorTheme": "Monokai"
       },
       "extensions": [
-        "ms-python.python"
+        "ms-python.python",
+        "MermaidChart.vscode-mermaid-chart"
       ]
     }
   },
