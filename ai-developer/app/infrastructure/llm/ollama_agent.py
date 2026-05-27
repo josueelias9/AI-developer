@@ -7,6 +7,7 @@ from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph import graph
 
+
 from ...domain.entities.code_generation import (
     CodeGenerationRequest,
     CodeGenerationResult,
@@ -16,28 +17,55 @@ from ...domain.interfaces.llm_gateway import ILLMGateway
 from ...domain.interfaces.code_repository import ICodeRepository
 
 
+# ── Pre-defined project structure ───────────────────────────────────────────
+
+_BASE_DIR = "/ai-generated-code"
+
+_SCAFFOLD_DIRS = [
+    "app/core",
+    "app/api/routes",
+    "src/domain/entities",
+    "src/application/interfaces",
+    "src/application/use_cases",
+    "src/infrastructure/database",
+    "src/infrastructure/repositories",
+    "src/interfaces",
+]
+
+
+def _scaffold_project_structure(base_dir: str) -> None:
+    """Pre-create the Clean Architecture directory tree under base_dir."""
+    for rel in _SCAFFOLD_DIRS:
+        os.makedirs(os.path.join(base_dir, rel), exist_ok=True)
+
+
 # ── Clean Architecture folder structure reference ─────────────────────────────
 
 _CLEAN_ARCH_STRUCTURE = """
 FastAPI Clean Architecture folder structure:
 
 project_root/
-├── main.py                            # FastAPI app entry point (creates app, includes routers)
 ├── requirements.txt                   # Python dependencies
 ├── README.md                          # Project documentation
-└── app/
+├── Dockerfile                         # Dockerfile for containerization
+├── app/
+│   ├── main.py    
+│   ├── core/    
+│   |   └── config.py               
+│   └── api/    
+│       ├── routes/    
+│       ├── main.py    
+│       └── deps.py
+└── src/
     ├── domain/
     │   ├── entities/                  # Pure data models (Pydantic BaseModel or dataclasses)
-    │   └── interfaces/                # Abstract base classes / protocols (no implementation)
     ├── application/
+    │   ├── interfaces/                # Abstract base classes / protocols (no implementation)
     │   └── use_cases/                 # Business logic, orchestrates domain + infrastructure
     ├── infrastructure/
     │   ├── database/                  # DB engine, session factory (SQLAlchemy / SQLModel)
     │   └── repositories/              # Concrete implementations of domain interfaces
     └── interfaces/
-        └── api/
-            ├── routers/               # FastAPI APIRouter handlers
-            └── schemas/               # Request / response Pydantic schemas
 """
 
 # ── Orchestrator system prompt ────────────────────────────────────────────────
@@ -48,19 +76,16 @@ FastAPI backend projects following Clean Architecture.
 {_CLEAN_ARCH_STRUCTURE}
 ## Your workflow
 
-1. **Plan** the complete list of files needed for the requested backend service.
-2. For each file, call `generate_code` with a precise description to produce its content.
-3. Call `write_code_file` to persist each generated file to disk.
-4. After all files are written, provide a concise summary of what was created.
-
 ## Rules
 
+- The directory structure under /ai-generated-code/ is ALREADY created. Do NOT create new directories.
+- Do NOT write any code directly. Instead, use the provided tools to generate and manage code files.
+- Use the tools to iteratively generate, read, and write code files as needed to fulfill the user's request.
+- You SHOULD NOT generate or write any code directly. Instead, you MUST use the provided tools to generate and manage code files.
 - ALWAYS follow the Clean Architecture folder structure shown above.
-- ALWAYS generate every layer: domain, application, infrastructure, interfaces/api.
-- ALWAYS include `main.py`, `requirements.txt`, and `README.md`.
-- Use `generate_code` to obtain each file's content — never write code inline yourself.
-- Use `write_code_file` immediately after `generate_code` to save the file.
 - Produce a complete, runnable project; do not skip any file.
+- Use the todo tool to keep track of the code generated and files created, and to plan next steps. This is important to keep track of progress and ensure all necessary files are created.
+
 """
 
 # ── Coder system prompt ───────────────────────────────────────────────────────
@@ -91,9 +116,8 @@ class OllamaAgentGateway(ILLMGateway):
         self._code_repository = code_repository
         self._temperature = temperature
 
-    def generate(self, request: CodeGenerationRequest) -> CodeGenerationResult:
-        generated_files: List[GeneratedFile] = []
-        output_dir = request.output_dir
+    def _create_agent(self, output_dir: str, generated_files: List[GeneratedFile]):
+        """Build and return the compiled LangGraph agent for a given output directory."""
 
         # Coder LLM — plain invocation, no tool calling required
         coder_llm = ChatOllama(
@@ -133,7 +157,11 @@ class OllamaAgentGateway(ILLMGateway):
                 lines = code.splitlines()
                 end = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
                 code = "\n".join(lines[1:end])
-            return code
+            return f"""
+```{file_path.rsplit('/', 1)[-1]}
+{code}
+```
+"""
 
         @tool
         def write_code_file(file_path: str, content: str) -> str:
@@ -169,7 +197,7 @@ class OllamaAgentGateway(ILLMGateway):
             files = self._code_repository.list_files(full_path)
             return "\n".join(files) if files else "(empty)"
 
-        tools = [generate_code, write_code_file, read_code_file, list_directory]
+        tools = [generate_code]
 
         # Orchestrator LLM — must support tool calling
         orchestrator_llm = ChatOllama(
@@ -178,43 +206,40 @@ class OllamaAgentGateway(ILLMGateway):
             temperature=self._temperature,
         )
 
-        from langchain.agents.middleware import PIIMiddleware
-        agent = create_agent(
+        from langchain.agents.middleware import TodoListMiddleware
+        from deepagents.middleware.filesystem import FilesystemMiddleware, FilesystemPermission
+        from deepagents.backends import CompositeBackend, StateBackend, FilesystemBackend
+        from langchain.agents.middleware import ModelCallLimitMiddleware
+        from langgraph.store.memory import InMemoryStore
+        from langgraph.checkpoint.memory import InMemorySaver
+
+        _scaffold_project_structure(_BASE_DIR)
+
+        return create_agent(
             orchestrator_llm,
             tools=tools,
             system_prompt=_ORCHESTRATOR_PROMPT,
             debug=True,
             middleware=[
-                # Redact emails in user input before sending to model
-                PIIMiddleware(
-                    "email",
-                    strategy="redact",
-                    apply_to_input=True,
+                TodoListMiddleware(),
+                FilesystemMiddleware(
+                    backend=FilesystemBackend(
+                            root_dir="/ai-generated-code",
+                            virtual_mode=False,
+                        )
                 ),
-                # Mask credit cards in user input
-                PIIMiddleware(
-                    "credit_card",
-                    strategy="mask",
-                    apply_to_input=True,
-                ),
-                # Block API keys - raise error if detected
-                PIIMiddleware(
-                    "api_key",
-                    detector=r"sk-[a-zA-Z0-9]{32}",
-                    strategy="block",
-                    apply_to_input=True,
-                ),            
             ],
         )
 
-        # For debugging: save the agent's reasoning graph in Mermaid format
-        mermaid = agent.get_graph().draw_mermaid()
+    def build_graph(self, output_dir: str):
+        """Return the compiled LangGraph agent for use in LangGraph Studio."""
+        return self._create_agent(output_dir, [])
 
-        mermaid = mermaid.replace("[", "_")
-        mermaid = mermaid.replace("]", "_")
-        
-        with open("graph.mmd", "w") as f:
-            f.write(mermaid)
+    def generate(self, request: CodeGenerationRequest) -> CodeGenerationResult:
+        generated_files: List[GeneratedFile] = []
+        output_dir = request.output_dir
+
+        agent = self._create_agent(output_dir, generated_files)
 
         try:
             result = agent.invoke({

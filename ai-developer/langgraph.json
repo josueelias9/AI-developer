@@ -1,0 +1,6 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "ai_developer": "./langgraph_app.py:graph"
+  }
+}

@@ -11,7 +11,8 @@
       },
       "extensions": [
         "ms-python.python",
-        "MermaidChart.vscode-mermaid-chart"
+        "MermaidChart.vscode-mermaid-chart",
+        "tamasfe.even-better-toml"
       ]
     }
   },
@@ -19,6 +20,7 @@
     "ai-developer"
   ],
   "features": {
-    "ghcr.io/devcontainers/features/git:1": {}
+    "ghcr.io/devcontainers/features/git:1": {},
+    // "ghcr.io/bartventer/arch-devcontainer-features/docker-in-docker:1": {}
   }
 }

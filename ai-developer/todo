@@ -1,0 +1,7 @@
+
+
+
+
+
+[ ] all files in deterministic directory
+[ ] deterministic folder structure (only folder). This means, files can go anywhere in this folders, but never create a new one

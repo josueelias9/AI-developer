@@ -1,0 +1,30 @@
+[project]
+name = "ai-developer"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Josue",email = "josueeliashuaman@gmail.com"}
+]
+requires-python = ">=3.11,<4.0"
+dependencies = [
+    "langchain>=1.0.0",
+    # "langchain-ollama>=0.2.0",
+    # "langchain-core>=0.3.0",
+    # "langgraph>=0.3.0",
+    # "pydantic>=2.0.0,<3.0.0",
+    # "langsmith>=0.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "black"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry]
+package-mode = false

@@ -1,0 +1,16 @@
+# files
+
+todo
+.env
+.gitignore
+Dockerfile
+graph.mmd
+.dockerignore
+requirements.txt
+
+
+# directories
+
+__pycache__
+.vscode
+deepagents
