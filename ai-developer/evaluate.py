@@ -19,7 +19,6 @@ from app.infrastructure.repositories.file_code_repository import FileCodeReposit
 from app.infrastructure.llm.ollama_agent import OllamaAgentGateway
 from app.application.use_cases.generate_backend_code import GenerateBackendCodeUseCase
 
-
 # ── Dataset ───────────────────────────────────────────────────────────────────
 
 DATASET_NAME = "backend-code-generation-eval"
@@ -44,6 +43,7 @@ _EXAMPLES = [
 
 
 # ── Target function ───────────────────────────────────────────────────────────
+
 
 def _build_target():
     base_url = os.getenv("OLLAMA_HOST")
@@ -78,6 +78,7 @@ def _build_target():
 
 # ── Evaluators ────────────────────────────────────────────────────────────────
 
+
 def generation_success(run: Run, example: Example) -> dict:
     """Score 1 if the agent completed without errors, 0 otherwise."""
     score = 1 if (run.outputs or {}).get("success") else 0
@@ -109,6 +110,7 @@ def has_readme(run: Run, example: Example) -> dict:
 
 # ── Dataset setup ─────────────────────────────────────────────────────────────
 
+
 def _setup_dataset(client: Client) -> str:
     existing = {d.name for d in client.list_datasets()}
     if DATASET_NAME not in existing:
@@ -128,6 +130,7 @@ def _setup_dataset(client: Client) -> str:
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
+
 
 def main() -> None:
     client = Client()

@@ -16,7 +16,6 @@ from ...domain.entities.code_generation import (
 from ...domain.interfaces.llm_gateway import ILLMGateway
 from ...domain.interfaces.code_repository import ICodeRepository
 
-
 # ── Pre-defined project structure ───────────────────────────────────────────
 
 _BASE_DIR = "/ai-generated-code"
@@ -101,6 +100,7 @@ Follow PEP 8 conventions.
 
 # ── Gateway implementation ────────────────────────────────────────────────────
 
+
 class OllamaAgentGateway(ILLMGateway):
     def __init__(
         self,
@@ -144,7 +144,10 @@ class OllamaAgentGateway(ILLMGateway):
             ]
             if context:
                 prompt_parts += ["", f"Context:\n{context}"]
-            prompt_parts += ["", "Return ONLY the raw source code with no markdown fences."]
+            prompt_parts += [
+                "",
+                "Return ONLY the raw source code with no markdown fences.",
+            ]
 
             messages = [
                 SystemMessage(content=_CODER_SYSTEM_PROMPT),
@@ -207,8 +210,15 @@ class OllamaAgentGateway(ILLMGateway):
         )
 
         from langchain.agents.middleware import TodoListMiddleware
-        from deepagents.middleware.filesystem import FilesystemMiddleware, FilesystemPermission
-        from deepagents.backends import CompositeBackend, StateBackend, FilesystemBackend
+        from deepagents.middleware.filesystem import (
+            FilesystemMiddleware,
+            FilesystemPermission,
+        )
+        from deepagents.backends import (
+            CompositeBackend,
+            StateBackend,
+            FilesystemBackend,
+        )
         from langchain.agents.middleware import ModelCallLimitMiddleware
         from langgraph.store.memory import InMemoryStore
         from langgraph.checkpoint.memory import InMemorySaver
@@ -224,9 +234,9 @@ class OllamaAgentGateway(ILLMGateway):
                 TodoListMiddleware(),
                 FilesystemMiddleware(
                     backend=FilesystemBackend(
-                            root_dir="/ai-generated-code",
-                            virtual_mode=False,
-                        )
+                        root_dir="/ai-generated-code",
+                        virtual_mode=False,
+                    )
                 ),
             ],
         )
@@ -242,9 +252,9 @@ class OllamaAgentGateway(ILLMGateway):
         agent = self._create_agent(output_dir, generated_files)
 
         try:
-            result = agent.invoke({
-                "messages": [{"role": "user", "content": request.prompt}]
-            })
+            result = agent.invoke(
+                {"messages": [{"role": "user", "content": request.prompt}]}
+            )
             last_msg = result["messages"][-1]
             summary = last_msg.content if hasattr(last_msg, "content") else ""
             return CodeGenerationResult(

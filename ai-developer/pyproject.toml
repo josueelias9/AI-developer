@@ -7,17 +7,19 @@ authors = [
 ]
 requires-python = ">=3.11,<4.0"
 dependencies = [
-    "langchain>=1.0.0",
-    # "langchain-ollama>=0.2.0",
-    # "langchain-core>=0.3.0",
-    # "langgraph>=0.3.0",
-    # "pydantic>=2.0.0,<3.0.0",
-    # "langsmith>=0.2.0",
+    "langchain",
+    "langchain-ollama",
+    "langchain-core",
+    "langgraph",
+    "langsmith",
+    "deepagents",
+    "pydantic",
 ]
 
 [dependency-groups]
 dev = [
-    "black"
+    "black",
+    "langgraph-cli[inmem]",
 ]
 
 

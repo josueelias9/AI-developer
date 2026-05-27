@@ -1,4 +1,7 @@
-from ...domain.entities.code_generation import CodeGenerationRequest, CodeGenerationResult
+from ...domain.entities.code_generation import (
+    CodeGenerationRequest,
+    CodeGenerationResult,
+)
 from ...domain.interfaces.llm_gateway import ILLMGateway
 
 
