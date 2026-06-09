@@ -15,7 +15,7 @@ from ...domain.entities.code_generation import (
 )
 from ...domain.interfaces.llm_gateway import ILLMGateway
 from ...domain.interfaces.code_repository import ICodeRepository
-
+from deepagents import create_deep_agent
 # ── Pre-defined project structure ───────────────────────────────────────────
 
 _BASE_DIR = "/ai-generated-code"
@@ -116,7 +116,7 @@ class OllamaAgentGateway(ILLMGateway):
         self._code_repository = code_repository
         self._temperature = temperature
 
-    def _create_agent(self, output_dir: str, generated_files: List[GeneratedFile]):
+    def _create_agent(self, generated_files: List[GeneratedFile]):
         """Build and return the compiled LangGraph agent for a given output directory."""
 
         # Coder LLM — plain invocation, no tool calling required
@@ -125,6 +125,8 @@ class OllamaAgentGateway(ILLMGateway):
             model=self._coder_model,
             temperature=self._temperature,
         )
+
+        output_dir = _BASE_DIR
 
         # ── Tool functions ────────────────────────────────────────────────────
 
@@ -174,6 +176,13 @@ class OllamaAgentGateway(ILLMGateway):
                 file_path: Relative path of the file to create, e.g. 'app/domain/entities/user.py'
                 content: Complete source code content of the file
             """
+            # Resolve the target path and enforce it stays within _BASE_DIR
+            resolved = os.path.realpath(os.path.join(output_dir, file_path))
+            if not resolved.startswith(os.path.realpath(output_dir) + os.sep) and resolved != os.path.realpath(output_dir):
+                raise PermissionError(
+                    f"Saving outside '{output_dir}' is not allowed. "
+                    f"Attempted path: {resolved}"
+                )
             gf = GeneratedFile(path=file_path, content=content)
             saved = self._code_repository.save(gf, output_dir)
             generated_files.append(gf)
@@ -200,7 +209,7 @@ class OllamaAgentGateway(ILLMGateway):
             files = self._code_repository.list_files(full_path)
             return "\n".join(files) if files else "(empty)"
 
-        tools = [generate_code]
+        tools = [generate_code,write_code_file]
 
         # Orchestrator LLM — must support tool calling
         orchestrator_llm = ChatOllama(
@@ -222,6 +231,7 @@ class OllamaAgentGateway(ILLMGateway):
         from langchain.agents.middleware import ModelCallLimitMiddleware
         from langgraph.store.memory import InMemoryStore
         from langgraph.checkpoint.memory import InMemorySaver
+        from deepagents.backends import StateBackend, StoreBackend, CompositeBackend
 
         _scaffold_project_structure(_BASE_DIR)
 
@@ -231,25 +241,38 @@ class OllamaAgentGateway(ILLMGateway):
             system_prompt=_ORCHESTRATOR_PROMPT,
             debug=True,
             middleware=[
-                TodoListMiddleware(),
+                # TodoListMiddleware(),
                 FilesystemMiddleware(
                     backend=FilesystemBackend(
                         root_dir="/ai-generated-code",
-                        virtual_mode=False,
-                    )
+                        virtual_mode=True,
+                    ),
+                    # _permissions=[
+                    #     # Allow all operations inside /ai-generated-code
+                    #     FilesystemPermission(
+                    #         operations=["read", "write"],
+                    #         paths=["/ai-generated-code/**", "/ai-generated-code"],
+                    #         mode="allow",
+                    #     ),
+                    #     # Deny writes anywhere else (reads outside are still allowed)
+                    #     FilesystemPermission(
+                    #         operations=["write"],
+                    #         paths=["/**"],
+                    #         mode="deny",
+                    #     ),
+                    # ],
                 ),
             ],
         )
 
-    def build_graph(self, output_dir: str):
+    def build_graph(self):
         """Return the compiled LangGraph agent for use in LangGraph Studio."""
-        return self._create_agent(output_dir, [])
+        return self._create_agent([])
 
     def generate(self, request: CodeGenerationRequest) -> CodeGenerationResult:
         generated_files: List[GeneratedFile] = []
-        output_dir = request.output_dir
 
-        agent = self._create_agent(output_dir, generated_files)
+        agent = self._create_agent(generated_files)
 
         try:
             result = agent.invoke(

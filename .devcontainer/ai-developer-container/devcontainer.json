@@ -12,7 +12,7 @@
       "extensions": [
         "ms-python.python",
         "MermaidChart.vscode-mermaid-chart",
-        "tamasfe.even-better-toml"
+        "bierner.markdown-mermaid"
       ]
     }
   },

@@ -9,3 +9,15 @@ poetry run langgraph dev
 ```sh
 poetry run black . --exclude deepagents
 ```
+
+- install all dependancies
+
+```sh
+poetry install
+```
+
+- check environment
+
+```sh
+poetry env info
+```

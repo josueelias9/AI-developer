@@ -10,14 +10,14 @@ dependencies = [
     "langchain",
     "langchain-ollama",
     "langchain-core",
-    "langgraph",
-    "langsmith",
     "deepagents",
     "pydantic",
+    "langgraph",
 ]
 
 [dependency-groups]
 dev = [
+    "langsmith",
     "black",
     "langgraph-cli[inmem]",
 ]
