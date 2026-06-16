@@ -1,11 +1,25 @@
 import os
 from typing import List
 
+from langgraph import graph
 from langchain.agents import create_agent
+from langchain.agents.middleware import TodoListMiddleware, ModelCallLimitMiddleware
 from langchain_ollama import ChatOllama
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, SystemMessage
-from langgraph import graph
+from langgraph.store.memory import InMemoryStore
+from langgraph.checkpoint.memory import InMemorySaver
+from deepagents import create_deep_agent
+from deepagents.middleware.filesystem import (
+    FilesystemMiddleware,
+    FilesystemPermission,
+)
+from deepagents.backends import (
+    CompositeBackend,
+    StateBackend,
+    FilesystemBackend,
+    StoreBackend,
+)
 
 
 from ...domain.entities.code_generation import (
@@ -15,7 +29,11 @@ from ...domain.entities.code_generation import (
 )
 from ...domain.interfaces.llm_gateway import ILLMGateway
 from ...domain.interfaces.code_repository import ICodeRepository
-from deepagents import create_deep_agent
+
+
+from prompts import _ORCHESTRATOR_PROMPT, _CODER_SYSTEM_PROMPT
+
+
 # ── Pre-defined project structure ───────────────────────────────────────────
 
 _BASE_DIR = "/ai-generated-code"
@@ -38,64 +56,6 @@ def _scaffold_project_structure(base_dir: str) -> None:
         os.makedirs(os.path.join(base_dir, rel), exist_ok=True)
 
 
-# ── Clean Architecture folder structure reference ─────────────────────────────
-
-_CLEAN_ARCH_STRUCTURE = """
-FastAPI Clean Architecture folder structure:
-
-project_root/
-├── requirements.txt                   # Python dependencies
-├── README.md                          # Project documentation
-├── Dockerfile                         # Dockerfile for containerization
-├── app/
-│   ├── main.py    
-│   ├── core/    
-│   |   └── config.py               
-│   └── api/    
-│       ├── routes/    
-│       ├── main.py    
-│       └── deps.py
-└── src/
-    ├── domain/
-    │   ├── entities/                  # Pure data models (Pydantic BaseModel or dataclasses)
-    ├── application/
-    │   ├── interfaces/                # Abstract base classes / protocols (no implementation)
-    │   └── use_cases/                 # Business logic, orchestrates domain + infrastructure
-    ├── infrastructure/
-    │   ├── database/                  # DB engine, session factory (SQLAlchemy / SQLModel)
-    │   └── repositories/              # Concrete implementations of domain interfaces
-    └── interfaces/
-"""
-
-# ── Orchestrator system prompt ────────────────────────────────────────────────
-
-_ORCHESTRATOR_PROMPT = f"""\
-You are an expert software architect that plans and coordinates the creation of \
-FastAPI backend projects following Clean Architecture.
-{_CLEAN_ARCH_STRUCTURE}
-## Your workflow
-
-## Rules
-
-- The directory structure under /ai-generated-code/ is ALREADY created. Do NOT create new directories.
-- Do NOT write any code directly. Instead, use the provided tools to generate and manage code files.
-- Use the tools to iteratively generate, read, and write code files as needed to fulfill the user's request.
-- You SHOULD NOT generate or write any code directly. Instead, you MUST use the provided tools to generate and manage code files.
-- ALWAYS follow the Clean Architecture folder structure shown above.
-- Produce a complete, runnable project; do not skip any file.
-- Use the todo tool to keep track of the code generated and files created, and to plan next steps. This is important to keep track of progress and ensure all necessary files are created.
-
-"""
-
-# ── Coder system prompt ───────────────────────────────────────────────────────
-
-_CODER_SYSTEM_PROMPT = """\
-You are an expert Python and FastAPI developer.
-When asked to write a file, return ONLY the complete source code.
-Do NOT include markdown fences, explanations, or any commentary.
-Write production-ready, fully functional code with type hints throughout.
-Follow PEP 8 conventions.
-"""
 
 
 # ── Gateway implementation ────────────────────────────────────────────────────
@@ -150,7 +110,6 @@ class OllamaAgentGateway(ILLMGateway):
                 "",
                 "Return ONLY the raw source code with no markdown fences.",
             ]
-
             messages = [
                 SystemMessage(content=_CODER_SYSTEM_PROMPT),
                 HumanMessage(content="\n".join(prompt_parts)),
@@ -209,8 +168,6 @@ class OllamaAgentGateway(ILLMGateway):
             files = self._code_repository.list_files(full_path)
             return "\n".join(files) if files else "(empty)"
 
-        tools = [generate_code,write_code_file]
-
         # Orchestrator LLM — must support tool calling
         orchestrator_llm = ChatOllama(
             base_url=self._base_url,
@@ -218,26 +175,11 @@ class OllamaAgentGateway(ILLMGateway):
             temperature=self._temperature,
         )
 
-        from langchain.agents.middleware import TodoListMiddleware
-        from deepagents.middleware.filesystem import (
-            FilesystemMiddleware,
-            FilesystemPermission,
-        )
-        from deepagents.backends import (
-            CompositeBackend,
-            StateBackend,
-            FilesystemBackend,
-        )
-        from langchain.agents.middleware import ModelCallLimitMiddleware
-        from langgraph.store.memory import InMemoryStore
-        from langgraph.checkpoint.memory import InMemorySaver
-        from deepagents.backends import StateBackend, StoreBackend, CompositeBackend
 
         _scaffold_project_structure(_BASE_DIR)
-
         return create_agent(
             orchestrator_llm,
-            tools=tools,
+            tools=[generate_code],
             system_prompt=_ORCHESTRATOR_PROMPT,
             debug=True,
             middleware=[

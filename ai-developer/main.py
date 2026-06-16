@@ -7,22 +7,17 @@ from app.interfaces.cli.cli_handler import CLIHandler
 
 
 def main() -> None:
-    base_url = os.getenv("OLLAMA_HOST")
-    model = os.getenv("OLLAMA_MODEL")
-    coder_model = os.getenv("OLLAMA_CODER")
-    output_dir = os.getenv("OUTPUT_DIR")
 
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(os.getenv("OUTPUT_DIR"), exist_ok=True)
 
-    code_repository = FileCodeRepository()
     llm_gateway = OllamaAgentGateway(
-        base_url=base_url,
-        model=model,
-        coder_model=coder_model,
-        code_repository=code_repository,
+        base_url=os.getenv("OLLAMA_HOST"),
+        model=os.getenv("OLLAMA_MODEL"),
+        coder_model=os.getenv("OLLAMA_CODER"),
+        code_repository=FileCodeRepository(),
     )
     use_case = GenerateBackendCodeUseCase(llm_gateway=llm_gateway)
-    cli = CLIHandler(use_case=use_case, output_dir=output_dir)
+    cli = CLIHandler(use_case=use_case, output_dir=os.getenv("OUTPUT_DIR"))
 
     cli.run()
 

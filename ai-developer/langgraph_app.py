@@ -38,4 +38,4 @@ _gateway = OllamaAgentGateway(
 )
 
 # `graph` is the compiled LangGraph graph that Studio will load.
-graph = _gateway.build_graph(_output_dir)
+graph = _gateway.build_graph()
