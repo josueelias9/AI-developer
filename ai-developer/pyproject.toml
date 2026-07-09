@@ -13,6 +13,7 @@ dependencies = [
     "deepagents",
     "pydantic",
     "langgraph",
+    # "langchain-google-genai"
 ]
 
 [dependency-groups]

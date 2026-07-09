@@ -31,7 +31,7 @@ from ...domain.interfaces.llm_gateway import ILLMGateway
 from ...domain.interfaces.code_repository import ICodeRepository
 
 
-from prompts import _ORCHESTRATOR_PROMPT, _CODER_SYSTEM_PROMPT
+from .prompts import _ORCHESTRATOR_PROMPT, _CODER_SYSTEM_PROMPT
 
 
 # ── Pre-defined project structure ───────────────────────────────────────────
@@ -68,13 +68,11 @@ class OllamaAgentGateway(ILLMGateway):
         model: str,
         coder_model: str,
         code_repository: ICodeRepository,
-        temperature: float = 0,
     ) -> None:
         self._base_url = base_url
         self._model = model
         self._coder_model = coder_model
         self._code_repository = code_repository
-        self._temperature = temperature
 
     def _create_agent(self, generated_files: List[GeneratedFile]):
         """Build and return the compiled LangGraph agent for a given output directory."""
@@ -83,7 +81,15 @@ class OllamaAgentGateway(ILLMGateway):
         coder_llm = ChatOllama(
             base_url=self._base_url,
             model=self._coder_model,
-            temperature=self._temperature,
+            temperature=0,
+            # num_ctx=4096
+        )
+
+        # Orchestrator LLM — must support tool calling
+        orchestrator_llm = ChatOllama(
+            base_url=self._base_url,
+            model=self._model,
+            temperature=0,
         )
 
         output_dir = _BASE_DIR
@@ -168,12 +174,6 @@ class OllamaAgentGateway(ILLMGateway):
             files = self._code_repository.list_files(full_path)
             return "\n".join(files) if files else "(empty)"
 
-        # Orchestrator LLM — must support tool calling
-        orchestrator_llm = ChatOllama(
-            base_url=self._base_url,
-            model=self._model,
-            temperature=self._temperature,
-        )
 
 
         _scaffold_project_structure(_BASE_DIR)
@@ -183,10 +183,11 @@ class OllamaAgentGateway(ILLMGateway):
             system_prompt=_ORCHESTRATOR_PROMPT,
             debug=True,
             middleware=[
+                # ModelCallLimitMiddleware(run_limit=5),
                 # TodoListMiddleware(),
                 FilesystemMiddleware(
                     backend=FilesystemBackend(
-                        root_dir="/ai-generated-code",
+                        root_dir=_BASE_DIR,
                         virtual_mode=True,
                     ),
                     # _permissions=[

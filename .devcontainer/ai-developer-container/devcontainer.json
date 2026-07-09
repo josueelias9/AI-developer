@@ -12,15 +12,14 @@
       "extensions": [
         "ms-python.python",
         "bierner.markdown-mermaid",
-        "tamasfe.even-better-toml"
+        "tamasfe.even-better-toml",
+        "eamodio.gitlens"
       ]
     }
   },
-  "runServices": [
-    "ai-developer"
-  ],
+  "runServices": ["ai-developer","ollama-init"],
   "features": {
-    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/git:1": {}
     // "ghcr.io/bartventer/arch-devcontainer-features/docker-in-docker:1": {}
   }
 }

@@ -1,16 +1,25 @@
-# How to use
+# how to use
 
-- check path of poetry executable (apply this command only when you are on the same directory as `pyproject.toml`)
+- install the libraries manually. This is because this is a dev container and is not supposed to run independently (at least so far). 
+
+```sh
+poetry install
+# use this when you are on production mode:
+# poetry install --without dev
+```
+
+- check the path of the poetry executable
 
 ```sh
 poetry env info
 ```
+![alt text](image.png)
 
-- asociate this executable project with Python interpreter
+- asociate this executable to the project's Python interpreter
 
-![alt text](image-1.png)
+![alt text](image-2.png)
 
-- debug agent
+- reoopen de container to apply the changes. This will help up get access to libraries used in this project. Now you can debug the agent:
 
 ```sh
 poetry run langgraph dev
@@ -26,3 +35,6 @@ poetry run black . --exclude deepagents
 
 
 
+
+
+Create a backend service for a health check application. Things like temperature, pulse-per-minute, blood preasure, summary-health, etc, should be reflected on the endpoints.

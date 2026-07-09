@@ -1,7 +1,7 @@
 services:
   ollama:
     image: ollama/ollama:latest
-    container_name: ollama
+    container_name: ollama-container
     ports:
       - "11434:11434"
     volumes:
@@ -19,7 +19,9 @@ services:
       timeout: 5s
       retries: 10
 
+
   ollama-init:
+    container_name: ollama-init-container
     image: ollama/ollama:latest
     depends_on:
       ollama:
@@ -35,7 +37,7 @@ services:
     build:
       context: ./ai-developer
       dockerfile: Dockerfile
-    container_name: ai-developer
+    container_name: ai-developer-container
     environment:
       - OLLAMA_HOST
       - OLLAMA_MODEL
@@ -43,14 +45,12 @@ services:
       - OUTPUT_DIR
       - PYTHONIOENCODING=utf-8
       - LANGSMITH_API_KEY
+      - GOOGLE_API_KEY
     volumes:
       - ./output:/output
-
-    # depends_on:
-      # ollama:
-        # condition: service_healthy
-    # stdin_open: true
-    # tty: true
+    depends_on:
+      ollama:
+        condition: service_healthy
 
 volumes:
   ollama_data:
