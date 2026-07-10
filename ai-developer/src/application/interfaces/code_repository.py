@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from ..entities.code_generation import GeneratedFile
+from ...enterprise.code_generation import GeneratedFile
 
 
 class ICodeRepository(ABC):

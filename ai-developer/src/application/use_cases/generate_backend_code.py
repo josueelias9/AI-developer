@@ -1,8 +1,8 @@
-from ...domain.entities.code_generation import (
+from ...enterprise.code_generation import (
     CodeGenerationRequest,
     CodeGenerationResult,
 )
-from ...domain.interfaces.llm_gateway import ILLMGateway
+from ...application.interfaces.llm_gateway import ILLMGateway
 
 
 class GenerateBackendCodeUseCase:

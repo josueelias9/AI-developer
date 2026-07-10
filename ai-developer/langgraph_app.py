@@ -15,8 +15,8 @@ Required env vars:
 import os
 import tempfile
 
-from app.infrastructure.repositories.file_code_repository import FileCodeRepository
-from app.infrastructure.llm.ollama_agent import OllamaAgentGateway
+from src.frameworks.repositories.file_code_repository import FileCodeRepository
+from src.frameworks.llm.ollama_agent import OllamaAgentGateway
 
 # ── Read config from environment ──────────────────────────────────────────────
 

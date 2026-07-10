@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from ..entities.code_generation import CodeGenerationRequest, CodeGenerationResult
+from ...enterprise.code_generation import CodeGenerationRequest, CodeGenerationResult
 
 
 class ILLMGateway(ABC):

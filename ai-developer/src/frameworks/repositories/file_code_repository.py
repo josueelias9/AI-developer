@@ -1,8 +1,8 @@
 import os
 from typing import List
 
-from ...domain.entities.code_generation import GeneratedFile
-from ...domain.interfaces.code_repository import ICodeRepository
+from ...enterprise.code_generation import GeneratedFile
+from ...application.interfaces.code_repository import ICodeRepository
 
 
 class FileCodeRepository(ICodeRepository):

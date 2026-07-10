@@ -22,13 +22,13 @@ from deepagents.backends import (
 )
 
 
-from ...domain.entities.code_generation import (
+from ...enterprise.code_generation import (
     CodeGenerationRequest,
     CodeGenerationResult,
     GeneratedFile,
 )
-from ...domain.interfaces.llm_gateway import ILLMGateway
-from ...domain.interfaces.code_repository import ICodeRepository
+from ...application.interfaces.llm_gateway import ILLMGateway
+from ...application.interfaces.code_repository import ICodeRepository
 
 
 from .prompts import _ORCHESTRATOR_PROMPT, _CODER_SYSTEM_PROMPT

@@ -1,9 +1,9 @@
 import os
 
-from app.infrastructure.repositories.file_code_repository import FileCodeRepository
-from app.infrastructure.llm.ollama_agent import OllamaAgentGateway
-from app.application.use_cases.generate_backend_code import GenerateBackendCodeUseCase
-from app.interfaces.cli.cli_handler import CLIHandler
+from src.frameworks.repositories.file_code_repository import FileCodeRepository
+from src.frameworks.llm.ollama_agent import OllamaAgentGateway
+from src.application.use_cases.generate_backend_code import GenerateBackendCodeUseCase
+from src.frameworks.cli.cli_handler import CLIHandler
 
 
 def main() -> None:
