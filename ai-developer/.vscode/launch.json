@@ -5,13 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "AI Developer: Run",
+            "name": "AI Developer: Run (my_app)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/main.py",
+            "program": "${workspaceFolder}/my_app/my_agent/agent.py",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}",
-            "justMyCode": false
+            "cwd": "${workspaceFolder}/my_app",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/my_app",
+                "OLLAMA_HOST": "http://localhost:11434",
+                "OLLAMA_MODEL": "qwen2.5:7b",
+                "OLLAMA_CODER": "qwen2.5-coder:7b",
+                "OUTPUT_DIR": "${workspaceFolder}/my_app/.generated"
+            }
         },
         {
             "name": "🟢 AI Developer: Evaluate (LangSmith)",
@@ -22,9 +29,13 @@
             "cwd": "${workspaceFolder}",
             "justMyCode": false,
             "env": {
+                "PYTHONPATH": "${workspaceFolder}/my_app",
                 "LANGCHAIN_TRACING_V2": "true",
                 "LANGCHAIN_API_KEY": "",
                 "LANGCHAIN_PROJECT": "ai-developer-eval",
+                "OLLAMA_HOST": "http://localhost:11434",
+                "OLLAMA_MODEL": "qwen2.5:7b",
+                "OLLAMA_CODER": "qwen2.5-coder:7b"
             }
         }
     ]

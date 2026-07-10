@@ -9,15 +9,24 @@ Required environment variables:
 """
 
 import os
+import sys
 import tempfile
+from pathlib import Path
 
+from langchain.agents import create_agent
+from langchain_ollama import ChatOllama
 from langsmith import Client
 from langsmith.evaluation import evaluate
 from langsmith.schemas import Example, Run
 
-from src.frameworks.repositories.file_code_repository import FileCodeRepository
-from src.frameworks.llm.ollama_agent import OllamaAgentGateway
-from src.application.use_cases.generate_backend_code import GenerateBackendCodeUseCase
+# Ensure my-app package is importable from the root workspace.
+MY_APP_DIR = Path(__file__).resolve().parent / "my-app"
+if str(MY_APP_DIR) not in sys.path:
+    sys.path.insert(0, str(MY_APP_DIR))
+
+from my_app.my_agent.utils.nodes import get_orchestrator_prompt
+from my_app.my_agent.utils.state import scaffold_project_structure
+from my_app.my_agent.utils.tools import build_tools
 
 # ── Dataset ───────────────────────────────────────────────────────────────────
 
@@ -46,32 +55,71 @@ _EXAMPLES = [
 
 
 def _build_target():
-    base_url = os.getenv("OLLAMA_HOST")
-    model = os.getenv("OLLAMA_MODEL")
-    coder_model = os.getenv("OLLAMA_CODER")
+    base_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+    coder_model = os.getenv("OLLAMA_CODER", "qwen2.5-coder:7b")
 
-    code_repository = FileCodeRepository()
-    llm_gateway = OllamaAgentGateway(
-        base_url=base_url,
-        model=model,
-        coder_model=coder_model,
-        code_repository=code_repository,
-    )
-    use_case = GenerateBackendCodeUseCase(llm_gateway=llm_gateway)
+    def _list_files(base_dir: str) -> list[str]:
+        result: list[str] = []
+        for root, _dirs, files in os.walk(base_dir):
+            for fname in files:
+                abs_path = os.path.join(root, fname)
+                result.append(os.path.relpath(abs_path, base_dir))
+        return sorted(result)
 
     def target(inputs: dict) -> dict:
         with tempfile.TemporaryDirectory() as output_dir:
-            result = use_case.execute(
-                prompt=inputs["prompt"],
-                output_dir=output_dir,
+            os.environ["OUTPUT_DIR"] = output_dir
+            scaffold_project_structure(output_dir)
+
+            coder_llm = ChatOllama(
+                base_url=base_url,
+                model=coder_model,
+                temperature=0,
             )
-        return {
-            "success": result.success,
-            "files": [f.path for f in result.files],
-            "file_count": len(result.files),
-            "summary": result.summary,
-            "error": result.error,
-        }
+            orchestrator_llm = ChatOllama(
+                base_url=base_url,
+                model=model,
+                temperature=0,
+            )
+
+            tools = build_tools(coder_llm=coder_llm, output_dir=output_dir)
+            agent = create_agent(
+                orchestrator_llm,
+                tools=tools,
+                system_prompt=get_orchestrator_prompt(),
+                debug=True,
+            )
+
+            try:
+                result = agent.invoke(
+                    {"messages": [{"role": "user", "content": inputs["prompt"]}]}
+                )
+                messages = result.get("messages", [])
+                summary = ""
+                if messages:
+                    last_msg = messages[-1]
+                    summary = getattr(last_msg, "content", "")
+                    if isinstance(summary, list):
+                        summary = "".join(str(part) for part in summary)
+
+                generated_files = _list_files(output_dir)
+                return {
+                    "success": True,
+                    "files": generated_files,
+                    "file_count": len(generated_files),
+                    "summary": str(summary),
+                    "error": None,
+                }
+            except Exception as exc:
+                generated_files = _list_files(output_dir)
+                return {
+                    "success": False,
+                    "files": generated_files,
+                    "file_count": len(generated_files),
+                    "summary": "",
+                    "error": str(exc),
+                }
 
     return target
 
