@@ -1,6 +1,10 @@
-__init__.py
+# patterns
 *.pyc
 
+# directories
 /output
 
+# files
+__init__.py
 .env
+.langgraph_checkpoint.2.pckl.tmp

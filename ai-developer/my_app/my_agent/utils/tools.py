@@ -80,8 +80,8 @@ def build_tools(coder_llm, output_dir: str):
         return "\n".join(sorted(result)) if result else "(empty)"
 
     return [
-        generate_code, 
-        # write_code_file, 
-        # read_code_file, 
+        generate_code,
+        # write_code_file,
+        # read_code_file,
         # list_directory
-        ]
+    ]

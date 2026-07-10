@@ -1,11 +1,35 @@
 import os
 
-from langchain.agents import create_agent
-from langchain_ollama import ChatOllama
 
-from my_agent.utils.nodes import get_orchestrator_prompt
 from my_agent.utils.state import scaffold_project_structure
 from my_agent.utils.tools import build_tools
+
+from deepagents.middleware.filesystem import FilesystemMiddleware
+from deepagents.backends import FilesystemBackend
+from langchain.agents.middleware import TodoListMiddleware, ModelCallLimitMiddleware
+from langchain.agents import create_agent
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_ollama import ChatOllama
+
+from my_agent.utils.nodes import ORCHESTRATOR_PROMPT
+
+def orchestration_factory(model, base_url):
+    if model == "ollama":
+        return ChatOllama(
+            base_url=base_url,
+            model=model,
+            temperature=0,
+        )
+    else:
+        return ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            temperature=1.0,  # Gemini 3.0+ defaults to 1.0
+            max_tokens=None,
+            google_api_key=os.environ["GOOGLE_API_KEY"],
+            timeout=None,
+            max_retries=2,
+            # other params...
+        )
 
 
 def build_graph():
@@ -23,19 +47,25 @@ def build_graph():
         model=coder_model,
         temperature=0,
     )
-    orchestrator_llm = ChatOllama(
-        base_url=base_url,
-        model=model,
-        temperature=0,
-    )
+
 
     tools = build_tools(coder_llm=coder_llm, output_dir=output_dir)
 
     return create_agent(
-        orchestrator_llm,
+        orchestration_factory("", base_url),
         tools=tools,
-        system_prompt=get_orchestrator_prompt(),
+        system_prompt=ORCHESTRATOR_PROMPT,
         debug=True,
+        middleware=[
+            # ModelCallLimitMiddleware(run_limit=5),
+            TodoListMiddleware(),
+            FilesystemMiddleware(
+                backend=FilesystemBackend(
+                    root_dir=output_dir,
+                    virtual_mode=True,
+                ),
+            ),
+        ],
     )
 
 
