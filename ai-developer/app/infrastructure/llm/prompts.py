@@ -38,7 +38,6 @@ FastAPI backend projects following Clean Architecture.
 
 ## Rules
 
-- The directory structure under /ai-generated-code/ is ALREADY created. Do NOT create new directories.
 - Do NOT write any code directly. Instead, use the provided tools to generate and manage code files.
 - Use the tools to iteratively generate, read, and write code files as needed to fulfill the user's request.
 - You SHOULD NOT generate or write any code directly. Instead, you MUST use the provided tools to generate and manage code files.

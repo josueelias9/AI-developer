@@ -15,7 +15,7 @@ poetry env info
 ```
 ![alt text](image.png)
 
-- asociate this executable to the project's Python interpreter
+- Select any python file to see the "Select Python Interpreter" option. Then, asociate the executable with the project's Python interpreter:
 
 ![alt text](image-2.png)
 
@@ -37,4 +37,4 @@ poetry run black . --exclude deepagents
 
 
 
-Create a backend service for a health check application. Things like temperature, pulse-per-minute, blood preasure, summary-health, etc, should be reflected on the endpoints.
+Create a backend service for a health check application. Things like temperature, pulse-per-minute, blood preasure, summary-health, etc, should be reflected on the endpoints. Save all the files with the FileSystem tool.
