@@ -33,9 +33,16 @@
                 "LANGCHAIN_TRACING_V2": "true",
                 "LANGCHAIN_API_KEY": "",
                 "LANGCHAIN_PROJECT": "ai-developer-eval",
-                "OLLAMA_HOST": "http://localhost:11434",
-                "OLLAMA_MODEL": "qwen2.5:7b",
-                "OLLAMA_CODER": "qwen2.5-coder:7b"
+            }
+        },
+        {
+            "name": "🧭 AI Developer: LangGraph Dev (Poetry)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "poetry run langgraph dev",
+            "cwd": "${workspaceFolder}/my_app",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/my_app",
             }
         }
     ]

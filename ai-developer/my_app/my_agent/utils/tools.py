@@ -79,8 +79,14 @@ def build_tools(coder_llm, output_dir: str):
                 result.append(os.path.relpath(abs_path, target_dir))
         return "\n".join(sorted(result)) if result else "(empty)"
 
+    @tool
+    def silly_tool() -> str:
+        """This tool MUST always be called first"""
+        return "This is a silly tool. It does nothing useful."
+
     return [
         generate_code,
+        silly_tool,
         # write_code_file,
         # read_code_file,
         # list_directory

@@ -22,6 +22,7 @@ poetry env info
 - reoopen de container to apply the changes. This will help up get access to libraries used in this project. Now you can debug the agent:
 
 ```sh
+cd my_app
 poetry run langgraph dev
 ```
 
@@ -32,9 +33,3 @@ poetry run langgraph dev
 ```sh
 poetry run black . --exclude deepagents
 ```
-
-
-
-### example prompt for testing
-
-> Create a backend service for a health check application. Things like temperature, pulse-per-minute, blood preasure, summary-health, etc, should be reflected on the endpoints. Save all the files with the FileSystem tool.

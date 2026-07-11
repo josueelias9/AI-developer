@@ -13,12 +13,13 @@ from langchain_ollama import ChatOllama
 
 from my_agent.utils.nodes import ORCHESTRATOR_PROMPT
 
+
 def orchestration_factory(model, base_url):
     if model == "ollama":
         return ChatOllama(
             base_url=base_url,
-            model=model,
-            temperature=0,
+            model=os.environ["OLLAMA_MODEL"],
+            temperature=1.0,
         )
     else:
         return ChatGoogleGenerativeAI(
@@ -34,12 +35,12 @@ def orchestration_factory(model, base_url):
 
 def build_graph():
     """Build and return the compiled LangChain agent graph."""
-    base_url = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
-    coder_model = os.getenv("OLLAMA_CODER", "qwen2.5-coder:7b")
-    output_dir = os.getenv("OUTPUT_DIR", "/ai-generated-code")
+    base_url = os.getenv("OLLAMA_HOST")
+    coder_model = os.getenv("OLLAMA_CODER")
+    output_dir = os.getenv("OUTPUT_DIR")
 
     os.makedirs(output_dir, exist_ok=True)
+    # TODO: restart empty project structure every time you get here
     scaffold_project_structure(output_dir)
 
     coder_llm = ChatOllama(
@@ -48,17 +49,16 @@ def build_graph():
         temperature=0,
     )
 
-
     tools = build_tools(coder_llm=coder_llm, output_dir=output_dir)
 
     return create_agent(
-        orchestration_factory("", base_url),
+        orchestration_factory("ola", base_url),
         tools=tools,
         system_prompt=ORCHESTRATOR_PROMPT,
         debug=True,
         middleware=[
             # ModelCallLimitMiddleware(run_limit=5),
-            TodoListMiddleware(),
+            # TodoListMiddleware(),
             FilesystemMiddleware(
                 backend=FilesystemBackend(
                     root_dir=output_dir,
