@@ -52,7 +52,7 @@ def build_graph():
     tools = build_tools(coder_llm=coder_llm, output_dir=output_dir)
 
     return create_agent(
-        orchestration_factory("ola", base_url),
+        orchestration_factory("ollama", base_url),
         tools=tools,
         system_prompt=ORCHESTRATOR_PROMPT,
         debug=True,

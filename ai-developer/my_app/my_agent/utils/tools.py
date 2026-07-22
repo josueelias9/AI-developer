@@ -19,7 +19,7 @@ def _resolve_path(output_dir: str, relative_path: str) -> str:
 def build_tools(coder_llm, output_dir: str):
     @tool
     def generate_code(file_path: str, description: str, context: str = "") -> str:
-        """Generate source code for a specific file using the coder model."""
+        """Generate source code for a specific file."""
         prompt_parts = [
             f"Generate the complete source code for the file: {file_path}",
             "",

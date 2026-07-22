@@ -46,6 +46,7 @@ services:
       - PYTHONIOENCODING=utf-8
       - LANGSMITH_API_KEY
       - GOOGLE_API_KEY
+      - TAVILY_API_KEY
     volumes:
       - ./output:/output
     depends_on:
